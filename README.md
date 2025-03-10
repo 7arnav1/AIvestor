@@ -1,0 +1,1 @@
+Developing a reinforcement learning model to optimize portfolio allocation by maximizing returns and minimizing risks. • Implemented PPO and leveraging Yahoo Fin to train the RL agent on historical data. • Creating an interactive dashboard using Matplotlib and Plotly to visualize portfolio performance and allocation trends
