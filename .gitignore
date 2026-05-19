@@ -11,5 +11,6 @@ data/cache/
 data/models/
 data/runs/
 *.db
+web/node_modules/
 .env
 .DS_Store

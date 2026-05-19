@@ -7,7 +7,7 @@ Quantitative backtesting and reinforcement learning for multi-asset portfolios. 
 ```bash
 cd AIvestor
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[rl,dev]"
+pip install -e ".[rl,dev,api]"
 ```
 
 Optional Postgres: `pip install -e ".[postgres]"` and set `DATABASE_URL` (see `.env.example`). Start Postgres with `docker compose up -d` if you use the bundled compose file.
@@ -42,6 +42,30 @@ python -m aivestor.scripts.evaluate \
 ```
 
 Use `--data-source yahoo` to force a live download. `auto` tries cache, then the database, then Yahoo.
+
+## Dashboard (REST API + TypeScript UI)
+
+After you have cached data and a trained model:
+
+```bash
+# Terminal 1 — API
+source .venv/bin/activate
+python -m aivestor.api
+
+# Terminal 2 — UI (dev, proxies /api to port 8000)
+cd web && npm install && npm run dev
+```
+
+Open http://localhost:5173, click **Run evaluation**. You get an out-of-sample metrics table, equity curves (baselines vs PPO), and the latest PPO allocation weights.
+
+Production-style (single server serves built UI):
+
+```bash
+cd web && npm run build
+python -m aivestor.api   # http://127.0.0.1:8000
+```
+
+Stack for demos: Python backtest/RL core, FastAPI REST layer, SQL-backed OHLCV (optional), TypeScript frontend.
 
 ## Commands
 
@@ -84,9 +108,19 @@ aivestor/
   evaluation.py
   rl/            # Env and rollout
   scripts/       # CLI entrypoints
+  api/           # FastAPI REST
+web/             # TypeScript dashboard (Vite)
 tests/
-.github/workflows/ci.yml
 ```
+
+## What is done vs planned
+
+| Layer | Status |
+|-------|--------|
+| Quant core (data, backtest, PPO, CLI) | Done |
+| REST API + simple UI | Done |
+| Azure / cloud deploy | Planned (Container Apps + managed Postgres) |
+| CI on GitHub | Planned (needs `workflow` token scope to push Actions) |
 
 ## Design notes
 

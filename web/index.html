@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AIvestor</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>AIvestor</h1>
+        <p class="tagline">Portfolio simulation — baselines vs PPO on the test window</p>
+      </header>
+      <section class="panel">
+        <div class="row">
+          <button id="run-btn" type="button">Run evaluation</button>
+          <span id="status" class="status">Ready</span>
+        </div>
+        <p id="meta" class="meta"></p>
+        <p id="model-info" class="meta"></p>
+      </section>
+      <section class="panel">
+        <h2>Metrics (out-of-sample)</h2>
+        <div id="table-wrap"></div>
+      </section>
+      <section class="panel">
+        <h2>Equity curves</h2>
+        <canvas id="chart" width="900" height="360"></canvas>
+      </section>
+      <section class="panel" id="weights-panel" hidden>
+        <h2>Latest PPO weights</h2>
+        <ul id="weights-list"></ul>
+      </section>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
