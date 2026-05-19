@@ -113,14 +113,35 @@ web/             # TypeScript dashboard (Vite)
 tests/
 ```
 
-## What is done vs planned
+## Docker
 
-| Layer | Status |
-|-------|--------|
-| Quant core (data, backtest, PPO, CLI) | Done |
-| REST API + simple UI | Done |
-| Azure / cloud deploy | Planned (Container Apps + managed Postgres) |
-| CI on GitHub | Planned (needs `workflow` token scope to push Actions) |
+Build and run the API plus dashboard on port 8000:
+
+```bash
+# Train locally first so PPO shows up in the UI (optional)
+python -m aivestor.scripts.fetch_data --tickers SPY AGG GLD --start 2015-01-01
+python -m aivestor.scripts.train_rl --timesteps 50000 --data-source cache
+
+docker compose build api
+docker compose up api
+# http://127.0.0.1:8000
+```
+
+`data/cache` and `data/models` are mounted from your machine. On a fresh image with no volumes, the entrypoint downloads prices from Yahoo on first start.
+
+Postgres only (optional): `docker compose up -d postgres`
+
+## Azure (Container Apps)
+
+```bash
+az login
+az extension add --name containerapp --upgrade
+./scripts/deploy-azure.sh
+```
+
+Details: [infra/azure-setup.md](infra/azure-setup.md)
+
+GitHub Actions: run the **Deploy to Azure** workflow (needs `AZURE_CREDENTIALS` secret). CI runs `pytest` on every push via [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
 ## Design notes
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -13,13 +14,30 @@ from aivestor.api.service import model_info, run_evaluation
 
 app = FastAPI(title="AIvestor API", version="0.1.0")
 
+_cors = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000",
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000"],
+    allow_origins=[o.strip() for o in _cors.split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _web_dist_dir() -> Path | None:
+    env = os.getenv("WEB_DIST")
+    candidates = [
+        Path(env) if env else None,
+        Path(__file__).resolve().parents[2] / "web" / "dist",
+        Path("/app/web/dist"),
+    ]
+    for p in candidates:
+        if p is not None and p.is_dir():
+            return p
+    return None
 
 
 class EvaluateRequest(BaseModel):
@@ -56,6 +74,6 @@ def evaluate(body: EvaluateRequest):
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-_web_dist = Path(__file__).resolve().parents[2] / "web" / "dist"
-if _web_dist.is_dir():
+_web_dist = _web_dist_dir()
+if _web_dist is not None:
     app.mount("/", StaticFiles(directory=str(_web_dist), html=True), name="web")

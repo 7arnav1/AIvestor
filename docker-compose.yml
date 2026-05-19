@@ -9,6 +9,21 @@ services:
       - "5432:5432"
     volumes:
       - aivestor_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aivestor"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATA_START: "2015-01-01"
+    volumes:
+      - ./data/cache:/app/data/cache
+      - ./data/models:/app/data/models
 
 volumes:
   aivestor_pgdata:
