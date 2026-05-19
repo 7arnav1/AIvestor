@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aivestor
+      POSTGRES_PASSWORD: aivestor
+      POSTGRES_DB: aivestor
+    ports:
+      - "5432:5432"
+    volumes:
+      - aivestor_pgdata:/var/lib/postgresql/data
+
+volumes:
+  aivestor_pgdata:

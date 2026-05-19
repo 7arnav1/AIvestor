@@ -1,0 +1,33 @@
+[project]
+name = "aivestor"
+version = "0.1.0"
+description = "AIvestor — quantitative trading & RL portfolio simulator"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pydantic>=2.0",
+    "yfinance>=0.2.36",
+    "sqlalchemy>=2.0",
+]
+
+[project.optional-dependencies]
+rl = [
+    "gymnasium>=0.29",
+    "stable-baselines3>=2.2",
+    "torch>=2.0",
+]
+postgres = ["psycopg[binary]>=3.1"]
+dev = ["pytest>=7.0"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aivestor*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
