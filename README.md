@@ -1,39 +1,90 @@
 # AIvestor
 
-Quantitative backtesting and reinforcement learning for multi-asset portfolios. Pull market data, simulate strategies with transaction costs, compare risk-adjusted metrics, and train a PPO allocator on a train window—then report results on a held-out test slice.
+**Cloud-ready portfolio simulation with reinforcement learning**
 
-## Install
+AIvestor downloads historical market data, simulates multi-asset portfolios with transaction costs, trains a **PPO** (Proximal Policy Optimization) allocation policy on a train window, and evaluates baselines versus the learned policy on a **held-out test** period. Results are available via CLI, REST API, and a TypeScript dashboard.
 
-```bash
-cd AIvestor
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[rl,dev,api]"
+> **Research and education only.** Past simulation does not guarantee future results. Not financial advice.
+
+---
+
+## Demo
+
+<!-- Replace the link below with your recorded walkthrough (YouTube, Loom, or GitHub upload). -->
+
+**[Watch demo video](https://github.com/7arnav1/AIvestor#demo)** — *add your link after recording*
+
+Quick local demo (about 2 minutes after setup):
+
+1. Start the API: `python -m aivestor.api`
+2. Build and open the UI: `cd web && npm run build && npm run dev` → http://localhost:5173
+3. Click **Run evaluation** to see out-of-sample metrics, equity curves, and PPO weights.
+
+Step-by-step recording script: [docs/DEMO.md](docs/DEMO.md)
+
+---
+
+## Features
+
+- **Data pipeline** — Yahoo Finance OHLCV, Pydantic validation, CSV cache, optional SQLAlchemy storage (SQLite / PostgreSQL)
+- **Backtesting** — Vectorized daily rebalance with commission and slippage on turnover
+- **Baselines** — Equal weight, buy-and-hold, 60/40, inverse-volatility risk parity
+- **RL agent** — Gymnasium `PortfolioEnv` + Stable-Baselines3 PPO; softmax portfolio weights
+- **Honest evaluation** — Train on first 70% of dates (configurable); report metrics only on the test slice
+- **REST API** — FastAPI (`/api/health`, `/api/model`, `/api/evaluate`)
+- **Dashboard** — TypeScript + Vite UI (metrics table, equity chart, latest allocation)
+- **Deployment** — Docker / docker-compose; Azure Container Apps script included
+
+---
+
+## Architecture
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
+│ Yahoo/cache │ ──► │ Train (PPO)  │ ──► │ Model (.zip)    │
+│  + optional │     │  70% dates   │     └────────┬────────┘
+│     DB      │     └──────────────┘              │
+└──────┬──────┘                                   ▼
+       │                              ┌──────────────────────┐
+       └────────────────────────────► │ Evaluate (test 30%)  │
+                                      │ baselines + PPO      │
+                                      └──────────┬───────────┘
+                                                 ▼
+                                      ┌──────────────────────┐
+                                      │ FastAPI + TS dashboard │
+                                      └──────────────────────┘
 ```
 
-Optional Postgres: `pip install -e ".[postgres]"` and set `DATABASE_URL` (see `.env.example`). Start Postgres with `docker compose up -d` if you use the bundled compose file.
+---
 
-## Workflow
+## Quick start
 
-Typical offline run (no repeated Yahoo calls after the first fetch):
+### Requirements
+
+- Python 3.10+
+- Node.js 18+ (for the dashboard)
+
+### Install
 
 ```bash
-# 1. Schema (SQLite default: data/aivestor.db)
-python -m aivestor.scripts.init_db
+git clone https://github.com/7arnav1/AIvestor.git
+cd AIvestor
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[rl,api,dev]"
+```
 
-# 2. Download and cache
+### Run the full pipeline
+
+```bash
+# 1. Download and cache prices
 python -m aivestor.scripts.fetch_data \
   --tickers SPY AGG GLD --start 2015-01-01
 
-# Optional: store OHLCV in the database
-python -m aivestor.scripts.fetch_data \
-  --tickers SPY AGG GLD --start 2015-01-01 --persist-db
-
-# 3. Train PPO on the train fraction (default 70%)
+# 2. Train PPO on the train split (~few min CPU)
 python -m aivestor.scripts.train_rl \
-  --timesteps 50000 \
-  --data-source cache
+  --timesteps 50000 --data-source cache
 
-# 4. Evaluate baselines + PPO on the test slice
+# 3. Evaluate on the test split
 python -m aivestor.scripts.evaluate \
   --model data/models/ppo_portfolio \
   --data-source cache \
@@ -41,97 +92,41 @@ python -m aivestor.scripts.evaluate \
   --output data/runs
 ```
 
-Use `--data-source yahoo` to force a live download. `auto` tries cache, then the database, then Yahoo.
-
-## Dashboard (REST API + TypeScript UI)
-
-After you have cached data and a trained model:
+### Dashboard
 
 ```bash
-# Terminal 1 — API
-source .venv/bin/activate
+# Terminal 1
 python -m aivestor.api
 
-# Terminal 2 — UI (dev, proxies /api to port 8000)
+# Terminal 2
 cd web && npm install && npm run dev
 ```
 
-Open http://localhost:5173, click **Run evaluation**. You get an out-of-sample metrics table, equity curves (baselines vs PPO), and the latest PPO allocation weights.
+Open http://localhost:5173 (dev) or build UI and use http://127.0.0.1:8000 (single server).
 
-Production-style (single server serves built UI):
+### Tests
 
 ```bash
-cd web && npm run build
-python -m aivestor.api   # http://127.0.0.1:8000
+pytest
 ```
 
-Stack for demos: Python backtest/RL core, FastAPI REST layer, SQL-backed OHLCV (optional), TypeScript frontend.
-
-## Commands
-
-| Command | Purpose |
-|--------|---------|
-| `python -m aivestor.scripts.init_db` | Create tables |
-| `python -m aivestor.scripts.fetch_data --tickers SPY AGG GLD --start 2018-01-01` | Yahoo OHLCV to CSV cache |
-| `python -m aivestor.scripts.fetch_data ... --async-fetch --persist-db` | Concurrent fetch + DB upsert |
-| `python -m aivestor.scripts.train_rl --timesteps 50000 --data-source cache` | Train PPO on train split |
-| `python -m aivestor.scripts.evaluate --model data/models/ppo_portfolio` | Test-split metrics |
-
-### Useful flags
-
-- `--data-source` — `auto`, `cache`, `db`, or `yahoo`
-- `--train-end YYYY-MM-DD` — fixed train/test cut instead of `--train-fraction`
-- `--commission`, `--slippage` — shared between env and backtest
-- `--turnover-penalty` — extra training regularization (default 0)
-- `--output data/runs` — write `metrics.csv`, `metrics.json`, and `run_meta.json`
-
-## What it does
-
-- **Data** — Yahoo Finance OHLCV, Pydantic validation, aligned closes, CSV cache, optional async fetch, SQLAlchemy storage (SQLite or Postgres).
-- **Backtest** — Vectorized daily rebalance with commission and slippage on turnover.
-- **Metrics** — Cumulative and annualized return, volatility, max drawdown, Sharpe, Sortino, Calmar.
-- **Baselines** — Equal weight, buy-and-hold (`bh_0`, `bh_SPY`, etc.), 60/40 (two assets), inverse-vol risk parity.
-- **Splits** — By date or fraction for train / test.
-- **RL** — `PortfolioEnv` (Gymnasium): lookback returns plus current weights in the observation; softmax actions; PPO via Stable-Baselines3; rollout to a weight matrix for backtest comparison.
-
-## Layout
-
-```
-aivestor/
-  data/          # Yahoo fetch, validation, load_prices
-  db/            # Schema, upsert, load closes
-  backtest/      # Engine and cost model
-  config.py      # Shared backtest / env settings
-  metrics.py
-  baselines.py
-  splits.py
-  evaluation.py
-  rl/            # Env and rollout
-  scripts/       # CLI entrypoints
-  api/           # FastAPI REST
-web/             # TypeScript dashboard (Vite)
-tests/
-```
+---
 
 ## Docker
 
-Build and run the API plus dashboard on port 8000:
-
 ```bash
-# Train locally first so PPO shows up in the UI (optional)
 python -m aivestor.scripts.fetch_data --tickers SPY AGG GLD --start 2015-01-01
 python -m aivestor.scripts.train_rl --timesteps 50000 --data-source cache
 
 docker compose build api
 docker compose up api
-# http://127.0.0.1:8000
 ```
 
-`data/cache` and `data/models` are mounted from your machine. On a fresh image with no volumes, the entrypoint downloads prices from Yahoo on first start.
+Visit http://127.0.0.1:8000. Local `data/cache` and `data/models` are mounted as volumes.
 
-Postgres only (optional): `docker compose up -d postgres`
+---
 
-## Azure (Container Apps)
+## Azure
 
 ```bash
 az login
@@ -139,21 +134,50 @@ az extension add --name containerapp --upgrade
 ./scripts/deploy-azure.sh
 ```
 
-Details: [infra/azure-setup.md](infra/azure-setup.md)
+See [infra/azure-setup.md](infra/azure-setup.md) for details and model/data mounting.
 
-GitHub Actions: run the **Deploy to Azure** workflow (needs `AZURE_CREDENTIALS` secret). CI runs `pytest` on every push via [.github/workflows/ci.yml](.github/workflows/ci.yml).
+---
 
-## Design notes
+## Project structure
 
-- Training uses only the train window; evaluation scripts always score the test window so you are not tuning on holdout data.
-- Step rewards in the env use the same `CostModel` as the backtest engine by default (`--turnover-penalty` is optional).
-- Simulation only—not live trading. Past backtests do not predict future returns.
+| Path | Description |
+|------|-------------|
+| `aivestor/data/` | Fetch, validate, `load_prices` (cache / DB / Yahoo) |
+| `aivestor/backtest/` | Simulation engine and cost model |
+| `aivestor/rl/` | Gymnasium environment and PPO rollout |
+| `aivestor/api/` | FastAPI application |
+| `aivestor/scripts/` | CLI: `fetch_data`, `train_rl`, `evaluate` |
+| `web/` | TypeScript dashboard (Vite) |
+| `tests/` | pytest suite |
+| `docs/DEMO.md` | Demo recording guide |
 
-## Tests
+---
 
-```bash
-pytest
-```
+## Configuration
+
+| Variable / flag | Purpose |
+|-----------------|--------|
+| `DATABASE_URL` | SQLite default (`data/aivestor.db`) or PostgreSQL |
+| `--data-source` | `auto`, `cache`, `db`, or `yahoo` |
+| `--train-fraction` | Default `0.7` train / `0.3` test |
+| `--train-end` | Fixed date split instead of fraction |
+| `--commission`, `--slippage` | Shared between RL env and backtest |
+
+Copy `.env.example` to `.env` for database overrides.
+
+---
+
+## Tech stack
+
+Python · NumPy · pandas · Pydantic · yfinance · SQLAlchemy · Gymnasium · Stable-Baselines3 · FastAPI · Uvicorn · TypeScript · Vite · Docker · Azure Container Apps
+
+---
+
+## License
+
+Use for portfolio and learning. Add a license file if you open-source formally.
+
+---
 
 ## Disclaimer
 

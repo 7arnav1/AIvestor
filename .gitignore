@@ -14,3 +14,4 @@ data/runs/
 web/node_modules/
 .env
 .DS_Store
+docs/SETUP-GUIDE.local.md
