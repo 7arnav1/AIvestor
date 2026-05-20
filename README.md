@@ -6,6 +6,10 @@ AIvestor downloads historical market data, simulates multi-asset portfolios with
 
 > **Research and education only.** Past simulation does not guarantee future results. Not financial advice.
 
+## Demo
+
+[Watch the walkthrough](demoVideos/Screen%20Recording%202026-05-19%20at%2011.20.57%20PM.mov)
+
 ---
 
 ## Features
