@@ -8,22 +8,6 @@ AIvestor downloads historical market data, simulates multi-asset portfolios with
 
 ---
 
-## Demo
-
-<!-- Replace the link below with your recorded walkthrough (YouTube, Loom, or GitHub upload). -->
-
-**[Watch demo video](https://github.com/7arnav1/AIvestor#demo)** — *add your link after recording*
-
-Quick local demo (about 2 minutes after setup):
-
-1. Start the API: `python -m aivestor.api`
-2. Build and open the UI: `cd web && npm run build && npm run dev` → http://localhost:5173
-3. Click **Run evaluation** to see out-of-sample metrics, equity curves, and PPO weights.
-
-Step-by-step recording script: [docs/DEMO.md](docs/DEMO.md)
-
----
-
 ## Features
 
 - **Data pipeline** — Yahoo Finance OHLCV, Pydantic validation, CSV cache, optional SQLAlchemy storage (SQLite / PostgreSQL)
@@ -149,7 +133,6 @@ See [infra/azure-setup.md](infra/azure-setup.md) for details and model/data moun
 | `aivestor/scripts/` | CLI: `fetch_data`, `train_rl`, `evaluate` |
 | `web/` | TypeScript dashboard (Vite) |
 | `tests/` | pytest suite |
-| `docs/DEMO.md` | Demo recording guide |
 
 ---
 
