@@ -8,7 +8,17 @@ AIvestor downloads historical market data, simulates multi-asset portfolios with
 
 ## Demo
 
-[Watch the walkthrough](demoVideos/Screen%20Recording%202026-05-19%20at%2011.20.57%20PM.mov)
+### 1. Training the PPO model
+
+<video controls src="https://raw.githubusercontent.com/7arnav1/AIvestor/main/demoVideos/demo-1-training.mp4" width="100%"></video>
+
+[Open training video](https://github.com/7arnav1/AIvestor/raw/main/demoVideos/demo-1-training.mp4)
+
+### 2. Dashboard and evaluation
+
+<video controls src="https://raw.githubusercontent.com/7arnav1/AIvestor/main/demoVideos/demo-2-dashboard.mp4" width="100%"></video>
+
+[Open dashboard video](https://github.com/7arnav1/AIvestor/raw/main/demoVideos/demo-2-dashboard.mp4)
 
 ---
 
